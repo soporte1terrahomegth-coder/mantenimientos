@@ -1,0 +1,3269 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bitácora de Mantenimiento Preventivo TI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ink:#151b23; --ink-2:#3d4a58; --ink-3:#6a7887;
+  --surface:#ffffff; --ground:#eef1f5; --sunk:#e4e9ef;
+  --line:#d8dee6; --line-2:#c3ccd6;
+  --accent:#1d4e73; --accent-soft:#e3edf5;
+  --crit:#a8271f; --crit-soft:#fbe9e7;
+  --warn:#8a5b00; --warn-soft:#fdf3e0;
+  --ok:#1f6b3a; --ok-soft:#e7f3ea;
+  --mute-soft:#e7ebf0;
+  --shadow:0 1px 2px rgba(21,27,35,.06), 0 8px 24px rgba(21,27,35,.07);
+  --radius:3px;
+  --f-disp:"Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", "Consolas", ui-monospace, monospace;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#e7ecf2; --ink-2:#b3bfcc; --ink-3:#8494a4;
+    --surface:#161d26; --ground:#0f151c; --sunk:#1e2733;
+    --line:#2b3643; --line-2:#3a4753;
+    --accent:#6aa7d4; --accent-soft:#1a2c3b;
+    --crit:#f08a80; --crit-soft:#33191a;
+    --warn:#e3b25c; --warn-soft:#302512;
+    --ok:#7fc794; --ok-soft:#152a1c;
+    --mute-soft:#1e2733;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e7ecf2; --ink-2:#b3bfcc; --ink-3:#8494a4;
+  --surface:#161d26; --ground:#0f151c; --sunk:#1e2733;
+  --line:#2b3643; --line-2:#3a4753;
+  --accent:#6aa7d4; --accent-soft:#1a2c3b;
+  --crit:#f08a80; --crit-soft:#33191a;
+  --warn:#e3b25c; --warn-soft:#302512;
+  --ok:#7fc794; --ok-soft:#152a1c;
+  --mute-soft:#1e2733;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font:15px/1.5 var(--f-body);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- encabezado ---------- */
+.topbar{
+  background:var(--surface); border-bottom:1px solid var(--line);
+  padding:14px 22px; display:flex; align-items:flex-end; gap:22px; flex-wrap:wrap;
+  position:sticky; top:0; z-index:30;
+}
+.brand h1{
+  font:600 27px/1 var(--f-disp); letter-spacing:.01em; margin:0 0 3px;
+  text-transform:uppercase;
+}
+.brand p{margin:0; font-size:12px; color:var(--ink-3); letter-spacing:.03em}
+.brand strong{color:var(--ink-2); font-weight:600}
+.topbar .spacer{flex:1}
+.topbar-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+
+.btn{
+  background:var(--surface); border:1px solid var(--line-2); border-radius:var(--radius);
+  padding:7px 13px; font-size:13px; font-weight:500; cursor:pointer;
+  transition:background .12s, border-color .12s;
+}
+.btn:hover{background:var(--sunk); border-color:var(--ink-3)}
+.btn-main{background:var(--accent); border-color:var(--accent); color:#fff}
+.btn-main:hover{filter:brightness(1.12); background:var(--accent)}
+:root[data-theme="dark"] .btn-main, :root:not([data-theme="light"]) .btn-main{color:#0f151c}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .btn-main{color:#fff}}
+.btn-sm{padding:4px 9px; font-size:12px}
+
+/* ---------- banda de estado ---------- */
+.statusband{
+  display:flex; gap:1px; background:var(--line); border-bottom:1px solid var(--line);
+  overflow-x:auto;
+}
+.stat{
+  background:var(--surface); padding:11px 20px 12px; min-width:132px; flex:1;
+  border-top:3px solid transparent; cursor:pointer; text-align:left;
+  border-left:0;border-right:0;border-bottom:0; font:inherit;
+}
+.stat:hover{background:var(--sunk)}
+.stat[aria-pressed="true"]{background:var(--sunk)}
+.stat .n{font:600 26px/1 var(--f-mono); font-variant-numeric:tabular-nums; display:block}
+.stat .l{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.stat.crit{border-top-color:var(--crit)} .stat.crit .n{color:var(--crit)}
+.stat.warn{border-top-color:var(--warn)} .stat.warn .n{color:var(--warn)}
+.stat.ok{border-top-color:var(--ok)} .stat.ok .n{color:var(--ok)}
+.stat.mute{border-top-color:var(--line-2)} .stat.mute .n{color:var(--ink-3)}
+
+/* ---------- aviso de arranque ---------- */
+.alertbar{
+  background:var(--crit-soft); border-bottom:1px solid var(--line);
+  padding:13px 22px; display:flex; gap:16px; align-items:flex-start;
+}
+.alertbar.is-warn{background:var(--warn-soft)}
+.alertbar.is-ok{background:var(--ok-soft)}
+.alertbar .ico{font:600 15px/1 var(--f-mono); padding-top:2px}
+.alertbar h2{margin:0 0 4px; font:600 15px/1.3 var(--f-body)}
+.alertbar ul{margin:5px 0 0; padding:0; list-style:none; display:grid; gap:2px;
+  font-family:var(--f-mono); font-size:12px; color:var(--ink-2)}
+.alertbar .more{color:var(--ink-3); font-style:italic}
+.alertbar .close{margin-left:auto}
+
+/* ---------- pestañas ---------- */
+.tabs{display:flex; gap:2px; padding:0 22px; background:var(--surface);
+  border-bottom:1px solid var(--line)}
+.tab{
+  background:none; border:0; border-bottom:2px solid transparent; cursor:pointer;
+  padding:11px 15px 9px; font-size:13px; font-weight:600; color:var(--ink-3);
+  letter-spacing:.02em;
+}
+.tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+
+.wrap{padding:16px 22px 40px; max-width:1560px}
+
+/* ---------- filtros ---------- */
+.filters{
+  display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:14px;
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:12px 14px;
+}
+.field{display:flex; flex-direction:column; gap:4px}
+.field label{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600}
+.field input, .field select{
+  background:var(--ground); border:1px solid var(--line-2); border-radius:var(--radius);
+  padding:6px 9px; font-size:13px; min-width:150px;
+}
+.field input:focus, .field select:focus{background:var(--surface)}
+#q{min-width:210px}
+.filters .spacer{flex:1}
+
+/* ---------- tabla ---------- */
+.tablewrap{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  overflow-x:auto; box-shadow:var(--shadow);
+}
+table{border-collapse:collapse; width:100%; min-width:1080px}
+thead th{
+  position:sticky; top:0; background:var(--sunk); z-index:5;
+  font-size:10.5px; letter-spacing:.085em; text-transform:uppercase; font-weight:600;
+  color:var(--ink-3); text-align:left; padding:9px 12px;
+  border-bottom:1px solid var(--line);
+}
+tbody td{padding:0 12px; height:42px; border-bottom:1px solid var(--line); font-size:13.5px;
+  vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--sunk)}
+td.c-chk{width:44px; padding-left:14px; position:relative}
+/* franja de severidad al borde del renglón */
+tr[data-est="vencido"] td.c-chk::before,
+tr[data-est="hoy"] td.c-chk::before,
+tr[data-est="proximo"] td.c-chk::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+}
+tr[data-est="vencido"] td.c-chk::before{background:var(--crit)}
+tr[data-est="hoy"] td.c-chk::before{background:var(--crit)}
+tr[data-est="proximo"] td.c-chk::before{background:var(--warn)}
+tr[data-est="vencido"]{background:var(--crit-soft)}
+tr[data-est="hoy"]{background:var(--crit-soft)}
+tr[data-est="proximo"]{background:var(--warn-soft)}
+tr[data-est="sinfecha"]{background:var(--mute-soft)}
+
+.chk{
+  appearance:none; width:19px; height:19px; border:1.5px solid var(--ink-3);
+  border-radius:2px; background:var(--surface); cursor:pointer; display:block;
+  position:relative; transition:border-color .12s, background .12s;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:checked{background:var(--ok); border-color:var(--ok)}
+.chk:checked::after{
+  content:""; position:absolute; left:5px; top:1.5px; width:6px; height:11px;
+  border:2.5px solid var(--surface); border-top:0; border-left:0; transform:rotate(40deg);
+}
+.ubi{font-weight:600}
+.ubi .flag{color:var(--warn); font-family:var(--f-mono); font-size:11px; margin-left:5px;
+  cursor:help}
+.usr{color:var(--ink-2)}
+.mono{font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums}
+.dim{color:var(--ink-3)}
+.pill{
+  display:inline-block; font-size:11px; font-weight:600; padding:2.5px 8px;
+  border-radius:11px; letter-spacing:.02em; white-space:nowrap;
+}
+.pill.vencido{background:var(--crit); color:var(--surface)}
+.pill.hoy{background:var(--crit); color:var(--surface)}
+.pill.proximo{background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn)}
+.pill.aldia{background:var(--ok-soft); color:var(--ok); border:1px solid var(--ok)}
+.pill.sinfecha{background:var(--mute-soft); color:var(--ink-3); border:1px solid var(--line-2)}
+.freq{font-size:12px; color:var(--ink-2); font-weight:500}
+.rowbtn{background:none;border:0;padding:3px 6px;cursor:pointer;color:var(--ink-3);
+  font-size:15px;border-radius:2px; line-height:1}
+.rowbtn:hover{background:var(--line); color:var(--ink)}
+.footnote{margin-top:10px; font-size:12px; color:var(--ink-3);
+  font-family:var(--f-mono); font-variant-numeric:tabular-nums}
+.empty{padding:40px 22px; text-align:center; color:var(--ink-3); font-size:14px}
+
+/* ---------- resumen ---------- */
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:16px}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px 20px}
+.panel h3{margin:0 0 14px; font:600 20px/1.1 var(--f-disp); text-transform:uppercase;
+  letter-spacing:.02em}
+.panel h4{margin:20px 0 8px; font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-3)}
+.bars{display:grid; gap:6px}
+.bar{display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px;
+  font-size:13px}
+.bar .name{display:flex; justify-content:space-between; gap:8px; align-items:baseline}
+.bar .name em{font-style:normal; font-size:11px; color:var(--ink-3);
+  letter-spacing:.04em; text-transform:uppercase}
+.bar .track{grid-column:1/-1; height:6px; background:var(--sunk); border-radius:1px;
+  overflow:hidden}
+.bar .fill{height:100%; background:var(--accent)}
+.bar.hasdue .fill{background:var(--crit)}
+.bar .qty{font-family:var(--f-mono); font-size:12.5px; font-variant-numeric:tabular-nums;
+  color:var(--ink-2)}
+.bar.hasdue .qty{color:var(--crit); font-weight:600}
+.tools{margin:0; padding:0; list-style:none; display:grid; gap:5px; font-size:13.5px}
+.tools li::before{content:"— "; color:var(--ink-3)}
+.notes{margin:0; padding:0; list-style:none; display:grid; gap:8px; font-size:12.5px;
+  color:var(--ink-2)}
+.notes li{border-left:2px solid var(--warn); padding-left:10px}
+.notes b{color:var(--ink)}
+.pathbox{font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3);
+  background:var(--sunk); padding:9px 11px; border-radius:var(--radius);
+  word-break:break-word}
+
+/* ---------- panel lateral de registro ---------- */
+.scrim{
+  position:fixed; inset:0; background:rgba(15,21,28,.42); z-index:50;
+  display:flex; justify-content:flex-end;
+}
+.scrim[hidden]{display:none!important}
+.drawer{
+  width:min(470px,100%); background:var(--surface); height:100%; overflow-y:auto;
+  box-shadow:-8px 0 32px rgba(0,0,0,.22); display:flex; flex-direction:column;
+}
+.drawer header{background:var(--accent); color:#fff; padding:18px 22px}
+:root[data-theme="dark"] .drawer header, :root:not([data-theme="light"]) .drawer header{color:#0f151c}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .drawer header{color:#fff}}
+.drawer header .eyebrow{font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+  opacity:.82; font-weight:600}
+.drawer header h2{margin:5px 0 3px; font:600 24px/1.1 var(--f-disp);
+  text-transform:uppercase; letter-spacing:.01em}
+.drawer header p{margin:0; font-size:12.5px; opacity:.85; font-family:var(--f-mono)}
+.drawer .body{padding:20px 22px; display:grid; gap:16px; align-content:start; flex:1}
+.drawer .body .actividad{font-size:13px; color:var(--ink-2); margin:0;
+  border-left:2px solid var(--line-2); padding-left:11px}
+.drawer label.lbl{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600; display:block; margin-bottom:5px}
+.drawer input[type=date], .drawer input[type=text], .drawer textarea{
+  width:100%; background:var(--ground); border:1px solid var(--line-2);
+  border-radius:var(--radius); padding:8px 10px; font-size:14px;
+}
+.drawer textarea{resize:vertical; min-height:70px; font-family:inherit}
+.daterow{display:flex; gap:8px; align-items:flex-end}
+.daterow .field{flex:1}
+.calcbox{
+  background:var(--ok-soft); border-left:3px solid var(--ok); padding:13px 15px;
+  border-radius:0 var(--radius) var(--radius) 0;
+}
+.calcbox.bad{background:var(--warn-soft); border-left-color:var(--warn)}
+.calcbox .k{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ok); font-weight:700}
+.calcbox.bad .k{color:var(--warn)}
+.calcbox .v{font:600 21px/1.2 var(--f-mono); margin:4px 0 2px; color:var(--ink)}
+.calcbox .d{font-size:12.5px; color:var(--ink-2)}
+.drawer footer{padding:14px 22px; background:var(--sunk); border-top:1px solid var(--line);
+  display:flex; gap:9px; justify-content:flex-end}
+.histlist{margin:0;padding:0;list-style:none;display:grid;gap:7px;font-size:12.5px}
+.histlist li{font-family:var(--f-mono); color:var(--ink-2);
+  border-left:2px solid var(--line-2); padding-left:10px}
+
+/* ---------- hoja de importación ---------- */
+.scrim.center{justify-content:center; align-items:center; padding:24px; z-index:70}
+.sheet{
+  width:min(920px,100%); max-height:100%; background:var(--surface);
+  border-radius:var(--radius); box-shadow:0 18px 48px rgba(0,0,0,.3);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.sheet header{background:var(--accent); color:#fff; padding:17px 22px}
+:root[data-theme="dark"] .sheet header, :root:not([data-theme="light"]) .sheet header{color:#0f151c}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .sheet header{color:#fff}}
+.sheet header .eyebrow{font-size:10.5px; letter-spacing:.11em; text-transform:uppercase;
+  opacity:.82; font-weight:600}
+.sheet header h2{margin:5px 0 3px; font:600 25px/1.1 var(--f-disp);
+  text-transform:uppercase; letter-spacing:.01em}
+.sheet header p{margin:0; font-size:12.5px; opacity:.85; font-family:var(--f-mono)}
+.sheet .body{padding:18px 22px; overflow-y:auto; flex:1}
+.sheet footer{padding:13px 22px; background:var(--sunk); border-top:1px solid var(--line);
+  display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.sheet footer .opts{flex:1; display:grid; gap:3px; font-size:12.5px; min-width:240px}
+.sheet footer label{display:flex; gap:7px; align-items:center; cursor:pointer}
+.impstats{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px}
+.impstat{border:1px solid var(--line); border-radius:var(--radius); padding:10px 15px;
+  min-width:116px}
+.impstat .n{font:600 23px/1 var(--f-mono); font-variant-numeric:tabular-nums; display:block}
+.impstat .l{font-size:10px; letter-spacing:.09em; text-transform:uppercase; font-weight:700}
+.impstat.add{background:var(--ok-soft)} .impstat.add .n,.impstat.add .l{color:var(--ok)}
+.impstat.upd{background:var(--accent-soft)} .impstat.upd .n,.impstat.upd .l{color:var(--accent)}
+.impstat.same .n,.impstat.same .l{color:var(--ink-3)}
+.impstat.gone{background:var(--warn-soft)} .impstat.gone .n,.impstat.gone .l{color:var(--warn)}
+.impnote{font-size:12.5px; color:var(--ink-2); margin:0 0 16px;
+  border-left:2px solid var(--accent); padding-left:11px}
+.impsec{margin:0 0 16px}
+.impsec h4{margin:0 0 6px; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase;
+  font-weight:700}
+.impsec.add h4{color:var(--ok)} .impsec.upd h4{color:var(--accent)}
+.impsec.gone h4{color:var(--warn)} .impsec.warn h4{color:var(--warn)}
+.impsec.mute h4{color:var(--ink-3)}
+.impsec ul{margin:0; padding:0; list-style:none; display:grid; gap:4px;
+  font-family:var(--f-mono); font-size:12px; color:var(--ink-2)}
+.impsec li em{font-style:normal; color:var(--ink-3); display:block; padding-left:14px}
+.impsec .mas{color:var(--ink-3); font-style:italic}
+.imperr{background:var(--crit-soft); border-left:3px solid var(--crit); padding:14px 16px;
+  border-radius:0 var(--radius) var(--radius) 0}
+.imperr b{display:block; color:var(--crit); font-size:14px; margin-bottom:5px}
+.imperr span{font-size:13px; color:var(--ink-2)}
+.impok{background:var(--ok-soft); border-left:3px solid var(--ok); padding:14px 16px;
+  border-radius:0 var(--radius) var(--radius) 0; font-size:13.5px}
+.impload{color:var(--ink-3); font-size:13.5px}
+
+/* ---------- avisos flotantes ---------- */
+.toasts{position:fixed; right:18px; bottom:18px; z-index:60; display:grid; gap:9px;
+  max-width:370px}
+.toast{
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ok);
+  border-radius:var(--radius); padding:13px 15px; box-shadow:var(--shadow);
+  animation:slide .22s ease-out;
+}
+.toast.warn{border-left-color:var(--warn)}
+.toast.info{border-left-color:var(--accent)}
+.toast b{display:block; font-size:13.5px; margin-bottom:3px}
+.toast span{font-size:12.5px; color:var(--ink-2); font-family:var(--f-mono);
+  white-space:pre-line}
+@keyframes slide{from{transform:translateX(16px);opacity:0}to{transform:none;opacity:1}}
+
+.hint{font-size:12.5px; color:var(--ink-3); margin:0 0 14px;
+  border-left:2px solid var(--accent); padding-left:11px}
+.hint b{color:var(--ink-2)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>Bitácora de Mantenimiento Preventivo TI</h1>
+    <p><strong>Grupo Terrahome</strong> &nbsp;·&nbsp; <span id="hdr-conteo"></span> &nbsp;·&nbsp; <span id="hdr-fecha"></span></p>
+  </div>
+  <div class="spacer"></div>
+  <div class="topbar-actions">
+    <button class="btn btn-sm btn-main" id="b-imp">Importar Excel</button>
+    <input type="file" id="f-imp" accept=".xlsx,.xlsm" hidden>
+    <button class="btn btn-sm" id="b-tema" title="Alternar claro / oscuro">Tema</button>
+    <button class="btn btn-sm" id="b-notif">Permitir notificaciones</button>
+    <button class="btn btn-sm" id="b-csv">Exportar CSV</button>
+    <button class="btn btn-sm" id="b-resp">Respaldar</button>
+    <button class="btn btn-sm" id="b-rest">Restaurar</button>
+    <input type="file" id="f-rest" accept=".json" hidden>
+  </div>
+</div>
+
+<div class="statusband" id="banda"></div>
+
+<div class="alertbar" id="aviso" hidden></div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-vista="programa">Programa</button>
+  <button class="tab" role="tab" aria-selected="false" data-vista="historial">Historial</button>
+  <button class="tab" role="tab" aria-selected="false" data-vista="resumen">Resumen y datos</button>
+</div>
+
+<div class="wrap">
+
+  <section id="v-programa">
+    <p class="hint">Marca la casilla del renglón cuando termines el mantenimiento. Se abre un panel
+      para confirmar <b>la fecha real en que lo hiciste</b> y la bitácora programa el siguiente
+      sumando la frecuencia a esa fecha. Con <b>Importar Excel</b> cargas una versión más reciente
+      del programa: verás qué va a cambiar antes de aplicarlo y tu historial no se toca.</p>
+    <div class="filters">
+      <div class="field"><label for="q">Buscar</label>
+        <input id="q" type="search" placeholder="Equipo, usuario, ubicación…"></div>
+      <div class="field"><label for="f-ubi">Ubicación</label><select id="f-ubi"></select></div>
+      <div class="field"><label for="f-fre">Frecuencia</label><select id="f-fre"></select></div>
+      <div class="field"><label for="f-est">Estado</label><select id="f-est"></select></div>
+      <div class="spacer"></div>
+      <button class="btn" id="b-limpiar">Limpiar filtros</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th></th><th>Ubicación</th><th>Equipo</th><th>Usuario responsable</th>
+          <th>Frecuencia</th><th>Último mantto</th><th>Siguiente mantto</th>
+          <th>Vence</th><th>Estado</th><th></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="vacio" hidden>Ningún equipo coincide con los filtros.</div>
+    </div>
+    <p class="footnote" id="pie"></p>
+  </section>
+
+  <section id="v-historial" hidden>
+    <div class="filters">
+      <div class="field"><label>Registros capturados</label>
+        <span class="mono" id="hist-n" style="padding:6px 0"></span></div>
+      <div class="spacer"></div>
+      <button class="btn" id="b-csvhist">Exportar historial CSV</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Realizado</th><th>Ubicación</th><th>Equipo</th><th>Usuario</th>
+          <th>Frecuencia</th><th>Siguiente programado</th><th>Realizado por</th>
+          <th>Observaciones</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-hist"></tbody>
+      </table>
+      <div class="empty" id="hist-vacio" hidden>
+        Aún no hay mantenimientos registrados. Marca una casilla en el Programa para empezar.
+      </div>
+    </div>
+  </section>
+
+  <section id="v-resumen" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Carga por ubicación</h3>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="panel">
+        <h3>Herramientas del programa</h3>
+        <ul class="tools" id="tools"></ul>
+        <h4>Puntos a revisar en el Excel origen</h4>
+        <ul class="notes" id="notas"></ul>
+        <h4>Dónde se guardan los datos</h4>
+        <p style="font-size:13px;color:var(--ink-2);margin:0 0 9px">
+          Este archivo guarda el historial en el almacenamiento local de <b>este</b> navegador
+          y <b>este</b> equipo. Si borras los datos del navegador, usas otra computadora o
+          abres el archivo en modo incógnito, el historial no viaja contigo. Usa
+          <b>Respaldar</b> con regularidad y <b>Restaurar</b> para moverlo.
+        </p>
+        <div class="pathbox" id="storeinfo"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-titulo">
+    <header>
+      <div class="eyebrow" id="dr-eyebrow">Registrar mantenimiento realizado</div>
+      <h2 id="dr-titulo"></h2>
+      <p id="dr-sub"></p>
+    </header>
+    <div class="body">
+      <p class="actividad" id="dr-act"></p>
+      <div class="daterow">
+        <div class="field" style="flex:1">
+          <label class="lbl" for="dr-fecha">Fecha en que se realizó</label>
+          <input type="date" id="dr-fecha">
+        </div>
+        <button class="btn btn-sm" id="dr-hoy" type="button">Hoy</button>
+      </div>
+      <div>
+        <label class="lbl" for="dr-tec">Realizado por</label>
+        <input type="text" id="dr-tec" placeholder="Área TI">
+      </div>
+      <div>
+        <label class="lbl" for="dr-notas">Observaciones (opcional)</label>
+        <textarea id="dr-notas" placeholder="Refacciones, hallazgos, equipo que quedó pendiente…"></textarea>
+      </div>
+      <div class="calcbox" id="dr-calc">
+        <div class="k">Siguiente mantenimiento</div>
+        <div class="v" id="dr-calc-v">—</div>
+        <div class="d" id="dr-calc-d"></div>
+      </div>
+      <div id="dr-hist-box" hidden>
+        <label class="lbl">Mantenimientos anteriores de este equipo</label>
+        <ul class="histlist" id="dr-hist"></ul>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" id="dr-cancel" type="button">Cancelar</button>
+      <button class="btn btn-main" id="dr-guardar" type="button">Guardar y programar siguiente</button>
+    </footer>
+  </div>
+</div>
+
+<div class="scrim" id="imp-scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="imp-titulo">
+    <header>
+      <div class="eyebrow">Importar programa desde Excel</div>
+      <h2 id="imp-titulo">Vista previa de la importación</h2>
+      <p id="imp-archivo"></p>
+    </header>
+    <div class="body" id="imp-body"></div>
+    <footer>
+      <div class="opts" id="imp-opts"></div>
+      <button class="btn" id="imp-cancel" type="button">Cancelar</button>
+      <button class="btn btn-main" id="imp-aplicar" type="button" disabled>Aplicar importación</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ==================================================================
+   Bitácora de Mantenimiento Preventivo TI — Grupo Terrahome
+   Origen de datos: Programa_de_Actividades_Mante_Prev_TH_1_1_actualizado.xlsx
+   Los registros se guardan en el almacenamiento local del navegador.
+   ================================================================== */
+const CATALOGO = {
+ "origen": "Programa_de_Actividades_Mante_Prev_TH_1_1_actualizado.xlsx",
+ "generado": "2026-09-08",
+ "archivo": "",
+ "herramientas": [
+  "Aire comprimido",
+  "brochas para quitar polvo",
+  "Alcohol isopropilico",
+  "Franela o trapo para limpiar"
+ ],
+ "equipos": [
+  {
+   "ubicacion": "Almacen Amandra",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "",
+   "actividad": "Limpieza interna ligera (ventiladores con aire comprimido Fuente)",
+   "frecuencia": "Mensual",
+   "tiempo": "25 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI Jmunoz",
+   "fecha_programada": "2026-09-30",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [],
+   "id": 1
+  },
+  {
+   "ubicacion": "Almacen Amandra",
+   "item": "2",
+   "equipo": "Impresora",
+   "usuario": "",
+   "actividad": "Limpieza con sopladora de aire y revisión de tóner",
+   "frecuencia": "Mensual",
+   "tiempo": "15 min por impresora",
+   "observaciones": "",
+   "responsable": "Área TI Jmunoz",
+   "fecha_programada": "2026-09-30",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [],
+   "id": 2
+  },
+  {
+   "ubicacion": "Almacen Amandra",
+   "item": "3",
+   "equipo": "Sdavila",
+   "usuario": "",
+   "actividad": "Limpieza con sopladora de aire",
+   "frecuencia": "Mensual",
+   "tiempo": "40 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-09-30",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [],
+   "id": 3
+  },
+  {
+   "ubicacion": "Almacen Azura-Ptmez",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Mensual",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-09-30",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [],
+   "id": 4
+  },
+  {
+   "ubicacion": "Almacen Azura-Ptmez",
+   "item": "2",
+   "equipo": "Impresora",
+   "usuario": "",
+   "actividad": "Limpieza con sopladora de aire y revisión de tóner",
+   "frecuencia": "Mensual",
+   "tiempo": "15 min por impresora",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-09-30",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [],
+   "id": 5
+  },
+  {
+   "ubicacion": "Almacen Portia",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "",
+   "actividad": "Limpieza interna ligera (ventiladores con aire comprimido Fuente)",
+   "frecuencia": "Mensual",
+   "tiempo": "25 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-03-24",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [
+    "La hoja de esta ubicacion esta oculta en el Excel; confirma si sigue vigente"
+   ],
+   "id": 6
+  },
+  {
+   "ubicacion": "Almacen Portia",
+   "item": "2",
+   "equipo": "Impresora",
+   "usuario": "",
+   "actividad": "Limpieza con aire comprimido y revisión de tóner",
+   "frecuencia": "Mensual",
+   "tiempo": "15 min por impresora",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-03-24",
+   "fecha_ultimo": "",
+   "meses": 1,
+   "alertas": [
+    "La hoja de esta ubicacion esta oculta en el Excel; confirma si sigue vigente"
+   ],
+   "id": 7
+  },
+  {
+   "ubicacion": "Traila Punt-Mez",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "vjaramillo",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-01",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 8
+  },
+  {
+   "ubicacion": "Traila Punt-Mez",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "fvelasco",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-01",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 9
+  },
+  {
+   "ubicacion": "Traila Punt-Mez",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Veronica Ruiz",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-01",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 10
+  },
+  {
+   "ubicacion": "Traila Punt-Mez",
+   "item": "4",
+   "equipo": "Impresora",
+   "usuario": "",
+   "actividad": "",
+   "frecuencia": "Bimestral",
+   "tiempo": "",
+   "observaciones": "",
+   "responsable": "",
+   "fecha_programada": "2026-10-01",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [
+    "Sin actividad descrita en el Excel"
+   ],
+   "id": 11
+  },
+  {
+   "ubicacion": "Traila Punt-Mez",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Marco tenorio",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Area Ti",
+   "fecha_programada": "2026-10-01",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 12
+  },
+  {
+   "ubicacion": "Traila Punt-Mez",
+   "item": "6",
+   "equipo": "PC",
+   "usuario": "Miriam Velasco",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Area Ti",
+   "fecha_programada": "2026-10-01",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 13
+  },
+  {
+   "ubicacion": "Traila Portia",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "ohernandez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-02",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 14
+  },
+  {
+   "ubicacion": "Traila Portia",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "cpalomo",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-02",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 15
+  },
+  {
+   "ubicacion": "Traila Portia",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "jhernandez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-02",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [],
+   "id": 16
+  },
+  {
+   "ubicacion": "Traila Portia",
+   "item": "4",
+   "equipo": "Impresora",
+   "usuario": "",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Bimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-02",
+   "fecha_ultimo": "",
+   "meses": 2,
+   "alertas": [
+    "Frecuencia vacia en el Excel; se hereda \"Bimestral\" de la ubicacion"
+   ],
+   "id": 17
+  },
+  {
+   "ubicacion": "EDS- 14490",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Jnuñez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-03",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 18
+  },
+  {
+   "ubicacion": "EDS- 14490",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "Moropeza",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-03",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 19
+  },
+  {
+   "ubicacion": "EDS- 14490",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Capitan",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-03",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 20
+  },
+  {
+   "ubicacion": "EDS- 14490",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Facturacion",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-03",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 21
+  },
+  {
+   "ubicacion": "EDS- 14490",
+   "item": "5",
+   "equipo": "Multifuncional",
+   "usuario": "Capitanes",
+   "actividad": "Limpieza interna ligera con sopladora de aire",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-03",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 22
+  },
+  {
+   "ubicacion": "EDS 13650",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Evelia.herrera",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-05",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 23
+  },
+  {
+   "ubicacion": "EDS 13650",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Janette.Gutierrez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-05",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 24
+  },
+  {
+   "ubicacion": "EDS 13650",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Capitan",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-05",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 25
+  },
+  {
+   "ubicacion": "EDS 13650",
+   "item": "5",
+   "equipo": "pc",
+   "usuario": "Jgarcia",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-05",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 26
+  },
+  {
+   "ubicacion": "EDS 13650",
+   "item": "6",
+   "equipo": "Impresora Capitanes",
+   "usuario": "Capiatanes",
+   "actividad": "Limpieza interna ligera con sopladora",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-05",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 27
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Diana.luevano",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 28
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "Christian Garza",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 29
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Berenice Rangel",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 30
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Aranza",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 31
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Lucero Roman",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 32
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "6",
+   "equipo": "PC",
+   "usuario": "Capitan",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 33
+  },
+  {
+   "ubicacion": "EDS 13998",
+   "item": "7",
+   "equipo": "pc",
+   "usuario": "Gabriela Castorena",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Trimestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Area TI",
+   "fecha_programada": "2026-10-07",
+   "fecha_ultimo": "",
+   "meses": 3,
+   "alertas": [],
+   "id": 34
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "jaime.alvarez Heustacio",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-12",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 35
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "Jaime.alvarez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-12",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 36
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Osvaldo Saldaña",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-12",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 37
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Maria Carbajal",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-12",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 38
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "6",
+   "equipo": "pc",
+   "usuario": "Luis Maravilla",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-12",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 39
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "7",
+   "equipo": "PC",
+   "usuario": "Adrian Garcia",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-14",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 40
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "8",
+   "equipo": "PC",
+   "usuario": "Refugio Muñoz",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-14",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 41
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "9",
+   "equipo": "Impresora",
+   "usuario": "Refugio Muñoz",
+   "actividad": "Limpieza interna ligera con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "25 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-14",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 42
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "10",
+   "equipo": "Plotter",
+   "usuario": "Refugio Muñoz",
+   "actividad": "Limpieza interna ligera con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "30 min",
+   "observaciones": "",
+   "responsable": "Area TI",
+   "fecha_programada": "2026-10-14",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 43
+  },
+  {
+   "ubicacion": "Corporativo -Direccion",
+   "item": "11",
+   "equipo": "Plotter",
+   "usuario": "Refugio Muñoz",
+   "actividad": "Limpieza interna ligera con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "30 min",
+   "observaciones": "",
+   "responsable": "Area TI",
+   "fecha_programada": "2026-10-14",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 44
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Juan Aguilar",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-15",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 45
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "2",
+   "equipo": "PC THAGAFLT010",
+   "usuario": "Christian Barajas",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI (Jairo Mrcial)",
+   "fecha_programada": "2026-10-15",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 46
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Violeta de Lira",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-15",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 47
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Anabella Gomez",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI (Jairo Mrcial)",
+   "fecha_programada": "2026-10-15",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 48
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Angelica lopez",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-17",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 49
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "6",
+   "equipo": "PC",
+   "usuario": "Alejandra Lopez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-17",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 50
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "7",
+   "equipo": "PC",
+   "usuario": "Manuel Mendoza",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-17",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 51
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "8",
+   "equipo": "PC",
+   "usuario": "Liliana Rodriguez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-17",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 52
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "9",
+   "equipo": "PC",
+   "usuario": "Monica Rosales",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 53
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "10",
+   "equipo": "PC",
+   "usuario": "Ctorres",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 54
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "11",
+   "equipo": "Impresora",
+   "usuario": "Ctorres",
+   "actividad": "Limpieza interna ligera con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 55
+  },
+  {
+   "ubicacion": "Corporativo Adm Y Finanzas",
+   "item": "12",
+   "equipo": "PC",
+   "usuario": "Stephania Valdez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 56
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Engy Bravo",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 57
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "Lizzet Casillas",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 58
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Guadalupe Perez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-18",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 59
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Norma Ramirez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-20",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 60
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Juan.Salazar",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Area TI",
+   "fecha_programada": "2026-10-20",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 61
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "6",
+   "equipo": "PC",
+   "usuario": "Olivia Delgado",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Area TI",
+   "fecha_programada": "2026-10-20",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 62
+  },
+  {
+   "ubicacion": "Corporativo -CH",
+   "item": "7",
+   "equipo": "Impresora",
+   "usuario": "",
+   "actividad": "Limpieza interna ligera con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "25 min por equipo",
+   "observaciones": "",
+   "responsable": "",
+   "fecha_programada": "2026-10-20",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 63
+  },
+  {
+   "ubicacion": "Corporativo -Proyectos",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Antonio Herrera",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-22",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 64
+  },
+  {
+   "ubicacion": "Corporativo -Proyectos",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "JoseLuis Parga",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-22",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 65
+  },
+  {
+   "ubicacion": "Corporativo -Proyectos",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Carlos arrollo",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-22",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 66
+  },
+  {
+   "ubicacion": "Corporativo -Proyectos",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Felipe Salas",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-22",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 67
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Susana Días",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-23",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 68
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "Ricardo Santiago",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-23",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 69
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Josafat barrera",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-23",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 70
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Marcos escobedo",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-23",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 71
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Genaro Vazquez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-23",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 72
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "6",
+   "equipo": "PC",
+   "usuario": "Mario Brcenas",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-24",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 73
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "7",
+   "equipo": "pc",
+   "usuario": "Asolis",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-24",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 74
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "8",
+   "equipo": "pc",
+   "usuario": "Jmaqueda",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-24",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 75
+  },
+  {
+   "ubicacion": "Corporativo-Constuccion",
+   "item": "9",
+   "equipo": "Impresora Epson",
+   "usuario": "",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-24",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 76
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Lorena Piña",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-25",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 77
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Juan Salamanca",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-25",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 78
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "4",
+   "equipo": "PC",
+   "usuario": "Edith Parra",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-25",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 79
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "5",
+   "equipo": "PC",
+   "usuario": "Oscar",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-25",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 80
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "7",
+   "equipo": "PC",
+   "usuario": "Jose Gallardo",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI(Jairo Marcial)",
+   "fecha_programada": "2026-10-25",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 81
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "8",
+   "equipo": "PC",
+   "usuario": "Vannesa Chavez",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-26",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 82
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "9",
+   "equipo": "pc",
+   "usuario": "Viridiana cuellar",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-26",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 83
+  },
+  {
+   "ubicacion": "Corporativo Comercial-Ventas",
+   "item": "10",
+   "equipo": "pc",
+   "usuario": "Erika Macias",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "40 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-26",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 84
+  },
+  {
+   "ubicacion": "Becarias",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Karina Villalobos",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por impresora",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [
+    "Sin fecha programada en el Excel; requiere capturarla",
+    "La hoja de esta ubicacion esta oculta en el Excel; confirma si sigue vigente"
+   ],
+   "id": 85
+  },
+  {
+   "ubicacion": "Becarias",
+   "item": "2",
+   "equipo": "PC",
+   "usuario": "Mariana Garcia",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [
+    "Sin fecha programada en el Excel; requiere capturarla",
+    "La hoja de esta ubicacion esta oculta en el Excel; confirma si sigue vigente"
+   ],
+   "id": 86
+  },
+  {
+   "ubicacion": "Becarias",
+   "item": "3",
+   "equipo": "PC",
+   "usuario": "Stephania Valadez",
+   "actividad": "Limpieza interna ligera con limpieza con sopladora de aire",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [
+    "Sin fecha programada en el Excel; requiere capturarla",
+    "La hoja de esta ubicacion esta oculta en el Excel; confirma si sigue vigente"
+   ],
+   "id": 87
+  },
+  {
+   "ubicacion": "ARIA",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "Marco.Cordero",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-28",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 88
+  },
+  {
+   "ubicacion": "Balconeria",
+   "item": "1",
+   "equipo": "PC",
+   "usuario": "LRAMIREZ",
+   "actividad": "Limpieza interna ligera con sopladora de aire Respaldo",
+   "frecuencia": "Semestral",
+   "tiempo": "35 min por equipo",
+   "observaciones": "",
+   "responsable": "Área TI",
+   "fecha_programada": "2026-10-28",
+   "fecha_ultimo": "",
+   "meses": 6,
+   "alertas": [],
+   "id": 89
+  }
+ ]
+};
+
+const HERRAMIENTAS = [
+  "Aire comprimido / sopladora de aire",
+  "Brochas para quitar polvo",
+  "Alcohol isopropílico",
+  "Franela o trapo para limpiar"
+];
+const MESES_FREC = {mensual:1, bimestral:2, trimestral:3, cuatrimestral:4, semestral:6, anual:12};
+const DIAS_AVISO = 15;
+const LLAVE = "terrahome.mantto.ti.v1";
+
+/* ------------------------------------------------------ utilidades ---- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function hoyISO(){
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+}
+function aISO(d){
+  return d ? new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10) : "";
+}
+function aFecha(iso){
+  if(!iso) return null;
+  const p = String(iso).slice(0,10).split("-").map(Number);
+  if(p.length !== 3 || p.some(isNaN)) return null;
+  const d = new Date(p[0], p[1]-1, p[2]);
+  return isNaN(d) ? null : d;
+}
+/** Suma meses conservando el día; si el día no existe, usa el último del mes.
+    31/ene + 1 mes = 28/feb ; 31/ago + 6 meses = 28/feb */
+function sumarMeses(fecha, meses){
+  if(!fecha) return null;
+  const d = new Date(fecha.getFullYear(), fecha.getMonth() + Number(meses), 1);
+  const ultimo = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  d.setDate(Math.min(fecha.getDate(), ultimo));
+  return d;
+}
+const mesesDe = f => MESES_FREC[String(f||"").trim().toLowerCase()] ?? 6;
+const diasEntre = (a,b) => Math.round((a - b) / 86400000);
+
+function estadoDe(prox){
+  if(!prox) return ["sinfecha","Sin programar"];
+  const d = diasEntre(prox, aFecha(hoyISO()));
+  if(d < 0)  return ["vencido","Vencido"];
+  if(d === 0) return ["hoy","Vence hoy"];
+  if(d <= DIAS_AVISO) return ["proximo","Por vencer"];
+  return ["aldia","Al día"];
+}
+function venceTexto(prox){
+  if(!prox) return "—";
+  const d = diasEntre(prox, aFecha(hoyISO()));
+  if(d < 0) return Math.abs(d) + " días de atraso";
+  if(d === 0) return "hoy";
+  if(d === 1) return "mañana";
+  return "en " + d + " días";
+}
+const MESNOM = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto",
+                "septiembre","octubre","noviembre","diciembre"];
+const fechaLarga = d => d ? `${d.getDate()} de ${MESNOM[d.getMonth()]} de ${d.getFullYear()}` : "sin fecha";
+
+/* ---------------------------------------------------------- estado ---- */
+let estado = { equipos:{}, historial:[], tecnico:"", avisoOculto:false, catalogo:null };
+
+/** El catálogo del Excel embebido, o el importado si ya hubo una importación. */
+function catalogoActual(){
+  return (estado.catalogo && estado.catalogo.equipos && estado.catalogo.equipos.length)
+    ? estado.catalogo : CATALOGO;
+}
+function equiposActivos(){
+  return catalogoActual().equipos.filter(e => !e.inactivo);
+}
+function herramientasActuales(){
+  const h = catalogoActual().herramientas;
+  return (h && h.length) ? h : HERRAMIENTAS;
+}
+
+function cargar(){
+  try{
+    const raw = localStorage.getItem(LLAVE);
+    if(raw){
+      const d = JSON.parse(raw);
+      estado = Object.assign(estado, d);
+      estado.equipos = d.equipos || {};
+      estado.historial = d.historial || [];
+      estado.catalogo = d.catalogo || null;
+    }
+  }catch(e){
+    aviso("No se pudo leer el historial guardado",
+          "El navegador bloqueó el almacenamiento local o los datos están dañados.\n" +
+          "Puedes trabajar normalmente, pero respalda con el botón Respaldar.", "warn", 14000);
+  }
+}
+function guardar(){
+  try{
+    localStorage.setItem(LLAVE, JSON.stringify(estado));
+    return true;
+  }catch(e){
+    aviso("No se pudo guardar", "Este navegador no permite guardar datos locales " +
+          "(modo incógnito o política del equipo). Usa Respaldar para no perder la captura.",
+          "warn", 14000);
+    return false;
+  }
+}
+const clave = e => `${e.ubicacion}|${e.item}|${e.equipo}|${e.usuario}`;
+
+/** Une el catálogo del Excel con lo capturado por el usuario. */
+function filas(){
+  return equiposActivos().map(e => {
+    const g = estado.equipos[clave(e)] || {};
+    const proxISO = g.proximo !== undefined ? g.proximo : (e.fecha_programada || "");
+    const prox = aFecha(proxISO);
+    const [est, estTxt] = estadoDe(prox);
+    return Object.assign({}, e, {
+      _k: clave(e), _ultimo: g.ultimo || "", _proxISO: proxISO || "",
+      _prox: prox, _est: est, _estTxt: estTxt, _meses: e.meses || mesesDe(e.frecuencia)
+    });
+  });
+}
+
+/* -------------------------------------------------------- registro ---- */
+function registrar(k, fechaISO, tecnico, notas){
+  const e = catalogoActual().equipos.find(x => clave(x) === k);
+  if(!e) return null;
+  const f = aFecha(fechaISO);
+  const meses = e.meses || mesesDe(e.frecuencia);
+  const sig = sumarMeses(f, meses);
+  estado.equipos[k] = { ultimo: aISO(f), proximo: aISO(sig) };
+  estado.historial.unshift({
+    k, ubicacion:e.ubicacion, equipo:e.equipo, usuario:e.usuario,
+    frecuencia:e.frecuencia, realizado:aISO(f), siguiente:aISO(sig),
+    tecnico:tecnico||"", notas:notas||"", capturado:new Date().toISOString().slice(0,16).replace("T"," ")
+  });
+  estado.tecnico = tecnico || estado.tecnico;
+  guardar();
+  return sig;
+}
+function deshacer(idx){
+  const h = estado.historial[idx];
+  if(!h) return;
+  estado.historial.splice(idx, 1);
+  const previo = estado.historial.find(x => x.k === h.k);
+  if(previo) estado.equipos[h.k] = { ultimo: previo.realizado, proximo: previo.siguiente };
+  else delete estado.equipos[h.k];
+  guardar();
+  render();
+}
+
+/* ----------------------------------------------------------- avisos ---- */
+function aviso(titulo, texto, tono="ok", ms=9000){
+  const el = document.createElement("div");
+  el.className = "toast " + (tono === "ok" ? "" : tono);
+  el.innerHTML = `<b>${esc(titulo)}</b><span>${esc(texto)}</span>`;
+  el.addEventListener("click", () => el.remove());
+  $("#toasts").appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+function notificacionSistema(titulo, cuerpo){
+  try{
+    if(typeof Notification !== "undefined" && Notification.permission === "granted"){
+      new Notification(titulo, { body: cuerpo });
+    }
+  }catch(e){ /* file:// puede bloquearla; el aviso en pantalla ya se mostró */ }
+}
+
+/* ---------------------------------------------------------- filtros ---- */
+const F = { q:"", ubi:"", fre:"", est:"" };
+
+function llenarFiltros(){
+  const ubis = [...new Set(equiposActivos().map(e => e.ubicacion))].sort();
+  const fres = [...new Set(equiposActivos().map(e => e.frecuencia))]
+                 .sort((a,b) => mesesDe(a) - mesesDe(b));
+  const op = (v,t) => `<option value="${esc(v)}">${esc(t)}</option>`;
+  $("#f-ubi").innerHTML = op("","Todas") + ubis.map(u => op(u,u)).join("");
+  $("#f-fre").innerHTML = op("","Todas") + fres.map(f => op(f,f)).join("");
+  $("#f-est").innerHTML = op("","Todos") +
+    [["vencido","Vencido"],["hoy","Vence hoy"],["proximo","Por vencer"],
+     ["aldia","Al día"],["sinfecha","Sin programar"]].map(([v,t]) => op(v,t)).join("");
+}
+function filtradas(fs){
+  const q = F.q.trim().toLowerCase();
+  return fs.filter(e =>
+    (!F.ubi || e.ubicacion === F.ubi) &&
+    (!F.fre || e.frecuencia === F.fre) &&
+    (!F.est || e._est === F.est) &&
+    (!q || [e.ubicacion,e.equipo,e.usuario,e.actividad,e.responsable,e.item]
+            .join(" ").toLowerCase().includes(q))
+  );
+}
+
+/* ------------------------------------------------------------ render ---- */
+const ORDEN = { vencido:0, hoy:1, proximo:2, sinfecha:3, aldia:4 };
+
+function render(){
+  const fs = filas();
+  const c = { vencido:0, hoy:0, proximo:0, aldia:0, sinfecha:0 };
+  fs.forEach(e => c[e._est]++);
+
+  // banda de estado (también sirve de filtro rápido)
+  $("#banda").innerHTML = [
+    ["vencido","Vencidos", c.vencido, "crit"],
+    ["hoy","Vencen hoy", c.hoy, "crit"],
+    ["proximo",`Por vencer (${DIAS_AVISO} días)`, c.proximo, "warn"],
+    ["aldia","Al día", c.aldia, "ok"],
+    ["sinfecha","Sin programar", c.sinfecha, "mute"]
+  ].map(([k,l,n,t]) =>
+    `<button class="stat ${t}" data-est="${k}" aria-pressed="${F.est===k}"
+       title="Filtrar por ${esc(l)}"><span class="n">${n}</span><span class="l">${esc(l)}</span></button>`
+  ).join("");
+
+  // tabla principal
+  const lista = filtradas(fs).sort((a,b) =>
+    ORDEN[a._est] - ORDEN[b._est] ||
+    (a._prox ? a._prox : new Date(2999,0,1)) - (b._prox ? b._prox : new Date(2999,0,1)) ||
+    a.ubicacion.localeCompare(b.ubicacion));
+
+  $("#tbody").innerHTML = lista.map(e => {
+    const hecho = !!e._ultimo && (e._est === "aldia" || e._est === "proximo");
+    const flag = e.alertas && e.alertas.length
+      ? `<span class="flag" title="${esc(e.alertas.join(" · "))}">[!]</span>` : "";
+    return `<tr data-est="${e._est}" data-k="${esc(e._k)}">
+      <td class="c-chk"><input class="chk" type="checkbox" ${hecho?"checked":""}
+          aria-label="Registrar mantenimiento de ${esc(e.equipo)} en ${esc(e.ubicacion)}"></td>
+      <td class="ubi">${esc(e.ubicacion)}${flag}</td>
+      <td>${esc(e.equipo)}</td>
+      <td class="usr">${esc(e.usuario) || '<span class="dim">—</span>'}</td>
+      <td class="freq">${esc(e.frecuencia)}</td>
+      <td class="mono ${e._ultimo?"":"dim"}">${e._ultimo || "nunca"}</td>
+      <td class="mono ${e._proxISO?"":"dim"}">${e._proxISO || "por definir"}</td>
+      <td class="mono dim">${esc(venceTexto(e._prox))}</td>
+      <td><span class="pill ${e._est}">${esc(e._estTxt)}</span></td>
+      <td><button class="rowbtn" data-ver="${esc(e._k)}" title="Ver detalle e historial">›</button></td>
+    </tr>`;
+  }).join("");
+  $("#vacio").hidden = lista.length > 0;
+  $("#pie").textContent =
+    `Mostrando ${lista.length} de ${fs.length} equipos · ` +
+    `Vencidos ${c.vencido} · Vencen hoy ${c.hoy} · Por vencer ${c.proximo} · ` +
+    `Al día ${c.aldia} · Sin programar ${c.sinfecha}`;
+
+  const act = equiposActivos();
+  const nInact = catalogoActual().equipos.length - act.length;
+  $("#hdr-conteo").textContent =
+    `${act.length} equipos · ${new Set(act.map(e=>e.ubicacion)).size} ubicaciones` +
+    (nInact ? ` · ${nInact} inactivo${nInact>1?"s":""}` : "");
+  $("#hdr-fecha").textContent = fechaLarga(aFecha(hoyISO()));
+
+  renderHistorial();
+  renderResumen(fs);
+  renderAviso(fs);
+}
+
+function renderHistorial(){
+  const h = estado.historial;
+  $("#hist-n").textContent = h.length + (h.length === 1 ? " registro" : " registros");
+  $("#hist-vacio").hidden = h.length > 0;
+  $("#tbody-hist").innerHTML = h.map((r,i) => `<tr>
+    <td class="mono">${esc(r.realizado)}</td>
+    <td class="ubi">${esc(r.ubicacion)}</td>
+    <td>${esc(r.equipo)}</td>
+    <td class="usr">${esc(r.usuario) || '<span class="dim">—</span>'}</td>
+    <td class="freq">${esc(r.frecuencia)}</td>
+    <td class="mono">${esc(r.siguiente)}</td>
+    <td>${esc(r.tecnico) || '<span class="dim">—</span>'}</td>
+    <td class="dim">${esc(r.notas) || "—"}</td>
+    <td><button class="rowbtn" data-del="${i}" title="Eliminar este registro">✕</button></td>
+  </tr>`).join("");
+}
+
+function renderResumen(fs){
+  const g = {};
+  fs.forEach(e => {
+    const o = g[e.ubicacion] || (g[e.ubicacion] = {total:0, due:0, frec:e.frecuencia});
+    o.total++;
+    if(e._est === "vencido" || e._est === "hoy") o.due++;
+  });
+  const max = Math.max(1, ...Object.values(g).map(o => o.total));
+  $("#bars").innerHTML = Object.keys(g).sort((a,b) => g[b].total - g[a].total).map(u => {
+    const o = g[u];
+    return `<div class="bar ${o.due?"hasdue":""}">
+      <div class="name"><span>${esc(u)}</span><em>${esc(o.frec)}</em></div>
+      <div class="qty">${o.total}${o.due ? " · " + o.due + " por atender" : ""}</div>
+      <div class="track"><div class="fill" style="width:${(100*o.total/max).toFixed(1)}%"></div></div>
+    </div>`;
+  }).join("");
+
+  $("#tools").innerHTML = herramientasActuales().map(t => `<li>${esc(t)}</li>`).join("");
+
+  const conNota = fs.filter(e => e.alertas && e.alertas.length);
+  $("#notas").innerHTML = conNota.length
+    ? conNota.map(e => `<li><b>${esc(e.ubicacion)} / ${esc(e.equipo)}${
+        e.usuario ? " (" + esc(e.usuario) + ")" : ""}</b><br>${esc(e.alertas.join("; "))}</li>`).join("")
+    : `<li style="border-left-color:var(--line-2)">Sin observaciones: los ${fs.length} registros
+        cargados traen frecuencia y fecha completas.</li>`;
+
+  let bytes = 0;
+  try{ bytes = (localStorage.getItem(LLAVE) || "").length; }catch(e){}
+  const cat = catalogoActual();
+  const nInact = cat.equipos.length - fs.length;
+  $("#storeinfo").textContent =
+    `Clave de almacenamiento: ${LLAVE}\n` +
+    `Registros en historial: ${estado.historial.length}  ·  Tamaño: ${(bytes/1024).toFixed(1)} KB\n` +
+    `Programa base: ${CATALOGO.origen}\n` +
+    (estado.catalogo
+      ? `Última importación: ${cat.archivo || "archivo sin nombre"} el ${cat.generado}` +
+        (nInact ? `\n${nInact} equipo(s) inactivo(s): su historial se conserva y vuelven a ` +
+                  `aparecer si regresan al Excel.` : "")
+      : `Sin importaciones: se usa el catálogo extraído el ${CATALOGO.generado}`);
+}
+
+function renderAviso(fs){
+  const el = $("#aviso");
+  if(estado.avisoOculto){ el.hidden = true; return; }
+  const criticos = fs.filter(e => e._est === "vencido" || e._est === "hoy")
+                     .sort((a,b) => (a._prox||0) - (b._prox||0));
+  const prox = fs.filter(e => e._est === "proximo").sort((a,b) => (a._prox||0) - (b._prox||0));
+  const sin = fs.filter(e => e._est === "sinfecha");
+  if(!criticos.length && !prox.length && !sin.length){
+    el.className = "alertbar is-ok";
+    el.innerHTML = `<span class="ico">OK</span><div><h2>Todo el programa está al día</h2>
+      <p style="margin:4px 0 0;font-size:13px;color:var(--ink-2)">
+      Ningún mantenimiento vencido ni por vencer en los próximos ${DIAS_AVISO} días.</p></div>
+      <button class="btn btn-sm close" data-cerrar-aviso>Ocultar</button>`;
+    el.hidden = false;
+    return;
+  }
+  const titulo = criticos.length
+    ? `${criticos.length} mantenimiento${criticos.length>1?"s":""} vencido${criticos.length>1?"s":""} o que vence${criticos.length>1?"n":""} hoy`
+    : (prox.length ? `${prox.length} mantenimiento${prox.length>1?"s":""} por vencer en ${DIAS_AVISO} días`
+                   : `${sin.length} equipo${sin.length>1?"s":""} sin fecha programada`);
+  const muestra = (criticos.length ? criticos : (prox.length ? prox : sin)).slice(0,6);
+  el.className = "alertbar" + (criticos.length ? "" : " is-warn");
+  el.innerHTML = `<span class="ico">${criticos.length ? "!!" : "!"}</span>
+    <div><h2>${esc(titulo)}</h2>
+    <ul>${muestra.map(e => `<li>${esc(e.ubicacion)} · ${esc(e.equipo)}${
+        e.usuario ? " (" + esc(e.usuario) + ")" : ""} — ${e._proxISO || "sin fecha"} · ${
+        esc(venceTexto(e._prox))}</li>`).join("")}
+      ${(criticos.length||prox.length||sin.length) > 6
+        ? `<li class="more">…y ${(criticos.length?criticos.length:(prox.length?prox.length:sin.length))-6} más en la tabla</li>` : ""}
+    </ul></div>
+    <button class="btn btn-sm close" data-cerrar-aviso>Ocultar</button>`;
+  el.hidden = false;
+}
+
+/* ------------------------------------------------------- panel lateral ---- */
+let drK = null;
+
+function abrirDrawer(k, soloVer){
+  const e = filas().find(x => x._k === k);
+  if(!e) return;
+  drK = k;
+  $("#dr-eyebrow").textContent = soloVer ? "Detalle del equipo" : "Registrar mantenimiento realizado";
+  $("#dr-titulo").textContent = e.equipo + (e.usuario ? " · " + e.usuario : "");
+  $("#dr-sub").textContent = `${e.ubicacion} · ${e.frecuencia} (cada ${e._meses} ${e._meses===1?"mes":"meses"}) · ${e.responsable || "Área TI"}`;
+  $("#dr-act").textContent = e.actividad || "Sin actividad descrita en el programa.";
+  $("#dr-fecha").value = hoyISO();
+  $("#dr-fecha").max = "";
+  $("#dr-tec").value = estado.tecnico || e.responsable || "Área TI";
+  $("#dr-notas").value = "";
+
+  const previos = estado.historial.filter(h => h.k === k);
+  $("#dr-hist-box").hidden = previos.length === 0;
+  $("#dr-hist").innerHTML = previos.slice(0,6).map(h =>
+    `<li>${esc(h.realizado)} → siguiente ${esc(h.siguiente)}${h.tecnico ? " · " + esc(h.tecnico) : ""}${
+      h.notas ? "<br>" + esc(h.notas) : ""}</li>`).join("");
+
+  recalcular();
+  $("#scrim").hidden = false;
+  $("#dr-fecha").focus();
+}
+function cerrarDrawer(){
+  $("#scrim").hidden = true;
+  drK = null;
+  render();   // devuelve las casillas a su estado real
+}
+function recalcular(){
+  const e = filas().find(x => x._k === drK);
+  if(!e) return;
+  const f = aFecha($("#dr-fecha").value);
+  const box = $("#dr-calc");
+  if(!f){
+    box.classList.add("bad");
+    $("#dr-calc-v").textContent = "—";
+    $("#dr-calc-d").textContent = "Captura una fecha válida para calcular el siguiente mantenimiento.";
+    return;
+  }
+  const sig = sumarMeses(f, e._meses);
+  box.classList.remove("bad");
+  $("#dr-calc-v").textContent = aISO(sig);
+  const adelante = diasEntre(f, aFecha(hoyISO())) > 0;
+  $("#dr-calc-d").textContent =
+    `${fechaLarga(sig)} · ${e.frecuencia}: +${e._meses} ${e._meses===1?"mes":"meses"} sobre la fecha capturada · ${venceTexto(sig)}` +
+    (adelante ? " · Nota: la fecha capturada es posterior a hoy." : "");
+}
+
+/* --------------------------------------------------------- exportar ---- */
+function bajar(nombre, texto, tipo){
+  const b = new Blob(["﻿" + texto], {type:(tipo||"text/csv") + ";charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const csvCampo = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+const csv = filasArr => filasArr.map(r => r.map(csvCampo).join(",")).join("\r\n");
+
+function exportarCSV(){
+  const fs = filtradas(filas());
+  const out = [["Ubicacion","Item","Equipo","Usuario responsable","Actividad","Frecuencia",
+    "Meses","Tiempo estimado","Responsable","Fecha programada Excel","Ultimo mantenimiento",
+    "Siguiente mantenimiento","Estado","Vence","Observaciones Excel","Puntos a revisar"]];
+  fs.forEach(e => out.push([e.ubicacion,e.item,e.equipo,e.usuario,e.actividad,e.frecuencia,
+    e._meses,e.tiempo,e.responsable,e.fecha_programada,e._ultimo,e._proxISO,e._estTxt,
+    venceTexto(e._prox),e.observaciones,(e.alertas||[]).join("; ")]));
+  bajar(`Estado_Mantenimiento_TI_${hoyISO()}.csv`, csv(out));
+  aviso("Archivo descargado", `${fs.length} equipos exportados a CSV.`, "info", 6000);
+}
+function exportarHistorialCSV(){
+  if(!estado.historial.length){
+    aviso("Sin datos", "Aún no hay mantenimientos registrados.", "warn", 6000); return;
+  }
+  const out = [["Fecha realizado","Ubicacion","Equipo","Usuario","Frecuencia",
+    "Siguiente programado","Realizado por","Observaciones","Capturado en"]];
+  estado.historial.forEach(h => out.push([h.realizado,h.ubicacion,h.equipo,h.usuario,
+    h.frecuencia,h.siguiente,h.tecnico,h.notas,h.capturado]));
+  bajar(`Historial_Mantenimiento_TI_${hoyISO()}.csv`, csv(out));
+  aviso("Archivo descargado", `${estado.historial.length} registros exportados.`, "info", 6000);
+}
+function respaldar(){
+  bajar(`Respaldo_Mantenimiento_TI_${hoyISO()}.json`,
+        JSON.stringify({version:1, generado:new Date().toISOString(), estado}, null, 1),
+        "application/json");
+  aviso("Respaldo descargado",
+        "Guárdalo en un lugar seguro. Con Restaurar puedes cargarlo en otra computadora.",
+        "info", 8000);
+}
+function restaurar(archivo){
+  const fr = new FileReader();
+  fr.onload = () => {
+    try{
+      const d = JSON.parse(fr.result);
+      const nuevo = d.estado || d;
+      if(!nuevo || typeof nuevo !== "object" || !("historial" in nuevo))
+        throw new Error("El archivo no tiene el formato del respaldo.");
+      if(!confirm(`El respaldo trae ${(nuevo.historial||[]).length} registros de historial.\n\n` +
+                  `Se reemplazará lo que tengas capturado en este navegador. ¿Continuar?`)) return;
+      estado = Object.assign({equipos:{}, historial:[], tecnico:"", avisoOculto:false,
+                              catalogo:null}, nuevo);
+      guardar(); llenarFiltros(); render();
+      aviso("Respaldo restaurado", `${estado.historial.length} registros cargados.`, "info");
+    }catch(err){
+      aviso("No se pudo restaurar",
+            "El archivo no es un respaldo válido de esta bitácora. " + err.message, "warn", 12000);
+    }
+  };
+  fr.readAsText(archivo);
+}
+
+/* ==================================================================
+   Lector de .xlsx en el navegador, sin librerias externas.
+   Un .xlsx es un ZIP con XML adentro: se lee el directorio central a
+   mano y se descomprime con DecompressionStream, que ya viene en
+   Chrome y Edge modernos.
+   ================================================================== */
+const ZIP_EOCD = 0x06054b50, ZIP_CEN = 0x02014b50, ZIP_LOC = 0x04034b50;
+
+function soportaDescompresion(){
+  return typeof DecompressionStream !== "undefined";
+}
+
+async function inflarCrudo(bytes){
+  const ds = new DecompressionStream("deflate-raw");
+  const escritor = ds.writable.getWriter();
+  escritor.write(bytes); escritor.close();
+  const partes = []; const lector = ds.readable.getReader();
+  for(;;){
+    const {done, value} = await lector.read();
+    if(done) break;
+    partes.push(value);
+  }
+  let total = 0; partes.forEach(p => total += p.length);
+  const out = new Uint8Array(total); let o = 0;
+  partes.forEach(p => { out.set(p, o); o += p.length; });
+  return out;
+}
+
+/** Devuelve un Map nombre -> Uint8Array con el contenido del ZIP. */
+async function leerZip(buffer){
+  const dv = new DataView(buffer);
+  const u8 = new Uint8Array(buffer);
+  if(buffer.byteLength < 22 || dv.getUint32(0, true) !== ZIP_LOC)
+    throw new Error("El archivo no es un .xlsx válido. Si es un .xls antiguo, ábrelo en " +
+                    "Excel y guárdalo como “Libro de Excel (*.xlsx)”.");
+
+  // El EOCD está al final; se busca hacia atrás por su firma
+  let eocd = -1;
+  const desde = Math.max(0, buffer.byteLength - 66000);
+  for(let i = buffer.byteLength - 22; i >= desde; i--){
+    if(dv.getUint32(i, true) === ZIP_EOCD){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error("El .xlsx está incompleto: no se encontró su índice interno.");
+
+  const nEntradas = dv.getUint16(eocd + 10, true);
+  let cen = dv.getUint32(eocd + 16, true);
+  if(cen === 0xffffffff)
+    throw new Error("El archivo usa el formato ZIP64, que esta versión no lee. " +
+                    "Vuelve a guardarlo desde Excel.");
+
+  const utf8 = new TextDecoder("utf-8");
+  const archivos = new Map();
+
+  for(let n = 0; n < nEntradas; n++){
+    if(cen + 46 > buffer.byteLength || dv.getUint32(cen, true) !== ZIP_CEN) break;
+    const metodo   = dv.getUint16(cen + 10, true);
+    const compLen  = dv.getUint32(cen + 20, true);
+    const nomLen   = dv.getUint16(cen + 28, true);
+    const extLen   = dv.getUint16(cen + 30, true);
+    const comLen   = dv.getUint16(cen + 32, true);
+    const locOff   = dv.getUint32(cen + 42, true);
+    const nombre   = utf8.decode(u8.subarray(cen + 46, cen + 46 + nomLen));
+    cen += 46 + nomLen + extLen + comLen;
+
+    if(!/\.(xml|rels)$/i.test(nombre)) continue;   // solo interesa el XML
+    if(dv.getUint32(locOff, true) !== ZIP_LOC) continue;
+    const lNom = dv.getUint16(locOff + 26, true);
+    const lExt = dv.getUint16(locOff + 28, true);
+    const ini  = locOff + 30 + lNom + lExt;
+    const datos = u8.subarray(ini, ini + compLen);
+    archivos.set(nombre, {metodo, datos});
+  }
+  if(!archivos.size) throw new Error("El .xlsx no contiene las partes XML esperadas.");
+
+  const salida = new Map();
+  for(const [nombre, {metodo, datos}] of archivos){
+    let crudo;
+    if(metodo === 0) crudo = datos;
+    else if(metodo === 8){
+      if(!soportaDescompresion())
+        throw new Error("Este navegador no puede descomprimir el archivo. " +
+                        "Actualiza Chrome o Edge, o usa la versión de escritorio (Python).");
+      crudo = await inflarCrudo(datos.slice());
+    } else {
+      continue;   // metodo de compresion no usado por Excel
+    }
+    salida.set(nombre, utf8.decode(crudo));
+  }
+  return salida;
+}
+
+/* -------------------- interpretación del XML de Excel ------------------- */
+const FMT_FECHA_FIJOS = new Set([...Array(9).keys()].map(i => i + 14)
+  .concat([...Array(10).keys()].map(i => i + 27))
+  .concat([45,46,47])
+  .concat([...Array(9).keys()].map(i => i + 50)));
+
+function xml(texto){
+  const d = new DOMParser().parseFromString(texto, "application/xml");
+  if(d.querySelector("parsererror"))
+    throw new Error("El XML interno del libro está dañado.");
+  return d;
+}
+const hijos = (nodo, tag) =>
+  [...nodo.getElementsByTagName(tag)].filter(x => x.parentNode === nodo);
+
+function textoSi(nodo){
+  return [...nodo.getElementsByTagName("t")].map(t => t.textContent || "").join("");
+}
+function colAIndice(ref){
+  let n = 0;
+  for(const ch of ref){
+    const c = ch.toUpperCase().charCodeAt(0);
+    if(c < 65 || c > 90) break;
+    n = n * 26 + (c - 64);
+  }
+  return n - 1;
+}
+function serialAFecha(num, base1904){
+  const v = Number(num);
+  if(!isFinite(v)) return null;
+  let dias = v, origen;
+  if(base1904){ origen = Date.UTC(1904,0,1); }
+  else { origen = Date.UTC(1899,11,30); if(v < 61) dias = v + 1; }
+  const ms = origen + Math.floor(dias) * 86400000;
+  const d = new Date(ms);
+  if(isNaN(d)) return null;
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+function estilosDeFecha(txtEstilos){
+  const fechas = new Set();
+  if(!txtEstilos) return fechas;
+  let doc;
+  try{ doc = xml(txtEstilos); }catch(e){ return fechas; }
+  const personal = new Map();
+  for(const nf of doc.getElementsByTagName("numFmt")){
+    const id = parseInt(nf.getAttribute("numFmtId"), 10);
+    if(isNaN(id)) continue;
+    const limpio = (nf.getAttribute("formatCode") || "")
+      .replace(/"[^"]*"/g, "").replace(/\[[^\]]*\]/g, "").toLowerCase();
+    personal.set(id, /[ymd]/.test(limpio) && !limpio.includes("general"));
+  }
+  const xfs = doc.getElementsByTagName("cellXfs")[0];
+  if(!xfs) return fechas;
+  hijos(xfs, "xf").forEach((xf, i) => {
+    const id = parseInt(xf.getAttribute("numFmtId") || "0", 10);
+    if(FMT_FECHA_FIJOS.has(id) || personal.get(id)) fechas.add(i);
+  });
+  return fechas;
+}
+
+/** Lee un File/Blob .xlsx y devuelve [{nombre, oculta, filas}]. */
+async function leerXlsx(archivo){
+  const partes = await leerZip(await archivo.arrayBuffer());
+  const txtWb = partes.get("xl/workbook.xml");
+  if(!txtWb) throw new Error("El archivo no contiene xl/workbook.xml; no parece un .xlsx.");
+  const base1904 = /date1904="(true|1)"/.test(txtWb);
+  const wb = xml(txtWb);
+
+  const destinos = new Map();
+  const txtRels = partes.get("xl/_rels/workbook.xml.rels");
+  if(txtRels){
+    for(const r of xml(txtRels).getElementsByTagName("Relationship")){
+      let t = r.getAttribute("Target") || "";
+      if(t.startsWith("/")) t = t.slice(1);
+      else if(!t.startsWith("xl/")) t = "xl/" + t.replace(/^\.?\//, "");
+      destinos.set(r.getAttribute("Id"), t);
+    }
+  }
+
+  let compartidas = [];
+  const txtSst = partes.get("xl/sharedStrings.xml");
+  if(txtSst){
+    try{
+      const d = xml(txtSst);
+      compartidas = hijos(d.documentElement, "si").map(textoSi);
+    }catch(e){ compartidas = []; }
+  }
+  const estFecha = estilosDeFecha(partes.get("xl/styles.xml"));
+
+  const declaradas = [];
+  const nodosHoja = wb.getElementsByTagName("sheet");
+  for(let i = 0; i < nodosHoja.length; i++){
+    const h = nodosHoja[i];
+    const rid = h.getAttribute("r:id") || h.getAttributeNS(
+      "http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
+    let ruta = destinos.get(rid);
+    if(!ruta || !partes.has(ruta)){
+      const alt = "xl/worksheets/sheet" + (i + 1) + ".xml";
+      ruta = partes.has(alt) ? alt : null;
+    }
+    if(ruta) declaradas.push({
+      nombre: h.getAttribute("name") || ("Hoja" + (i + 1)),
+      oculta: (h.getAttribute("state") || "visible").toLowerCase() !== "visible",
+      ruta
+    });
+  }
+  if(!declaradas.length) throw new Error("El libro no declara ninguna hoja de cálculo.");
+
+  const salida = [];
+  for(const hoja of declaradas){
+    const filas = [];
+    let doc;
+    try{ doc = xml(partes.get(hoja.ruta)); }catch(e){ continue; }
+    const cuerpo = doc.getElementsByTagName("sheetData")[0];
+    if(cuerpo){
+      for(const fila of hijos(cuerpo, "row")){
+        // el XML omite las filas vacías: hay que respetar el atributo r
+        const nFila = parseInt(fila.getAttribute("r") || "0", 10);
+        if(nFila > 0){ while(filas.length < Math.min(nFila - 1, 20000)) filas.push([]); }
+        const celdas = [];
+        for(const c of hijos(fila, "c")){
+          const ref = c.getAttribute("r") || "";
+          const idx = ref ? colAIndice(ref) : celdas.length;
+          if(idx < 0 || idx >= 64) continue;
+          while(celdas.length < idx) celdas.push(null);
+
+          const tipo = c.getAttribute("t") || "n";
+          let valor = null;
+          if(tipo === "inlineStr"){
+            const is = hijos(c, "is")[0];
+            valor = is ? textoSi(is) : null;
+          } else {
+            const v = hijos(c, "v")[0];
+            const crudo = v ? v.textContent : null;
+            if(crudo === null || crudo === undefined) valor = null;
+            else if(tipo === "s") valor = compartidas[parseInt(crudo, 10)] ?? null;
+            else if(tipo === "str" || tipo === "e") valor = crudo;
+            else if(tipo === "b") valor = crudo !== "0" && crudo.toLowerCase() !== "false";
+            else {
+              const si = parseInt(c.getAttribute("s") || "0", 10) || 0;
+              if(estFecha.has(si)) valor = serialAFecha(crudo, base1904);
+              else { const n = Number(crudo); valor = isFinite(n) ? n : crudo; }
+            }
+          }
+          celdas.push(valor);
+        }
+        while(celdas.length && celdas[celdas.length - 1] === null) celdas.pop();
+        filas.push(celdas);
+      }
+      while(filas.length && !filas[filas.length - 1]
+            .some(x => x !== null && String(x).trim() !== "")) filas.pop();
+    }
+    salida.push({nombre: hoja.nombre, oculta: hoja.oculta, filas});
+  }
+  return salida;
+}
+
+/* --------- del contenido de las hojas al programa de mantenimiento -------- */
+const FIN_DE_TABLA = ["herramientas","aire comprimido","brochas","alcohol","franela",
+                      "representacion de activiades","representacion de actividades"];
+
+function celdaTexto(v){
+  if(v === null || v === undefined) return "";
+  if(v instanceof Date) return aISO(v);
+  return String(v).replace(/\s+/g, " ").trim();
+}
+function celdaFecha(v){
+  if(v instanceof Date) return v;
+  if(typeof v === "number") return serialAFecha(v, false);
+  const s = celdaTexto(v);
+  if(!s) return null;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
+  if(m){
+    let [_, a, b, y] = m;
+    if(y.length === 2) y = "20" + y;
+    // dd/mm/aaaa salvo que el primer número no pueda ser día
+    let dia = +a, mes = +b;
+    if(dia > 12 && mes <= 12){ /* ya está bien */ }
+    else if(mes > 12 && dia <= 12){ dia = +b; mes = +a; }
+    if(mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
+    return new Date(+y, mes - 1, dia);
+  }
+  return null;
+}
+function localizarColumnas(encabezado){
+  const bajo = encabezado.map(h => celdaTexto(h).toLowerCase());
+  const buscar = (claves, excluir = []) => {
+    for(let i = 0; i < bajo.length; i++){
+      if(excluir.includes(i) || !bajo[i]) continue;
+      if(claves.some(k => bajo[i].includes(k))) return i;
+    }
+    return null;
+  };
+  const col = {};
+  col.item = buscar(["item","no.","num"]);
+  col.ubicacion = buscar(["ubicacion","ubicación","sucursal","sitio"]);
+  col.inicio = buscar(["fecha inicio","fecha inico","fecha de inicio","inicio"]);
+  col.frecuencia = buscar(["frecuencia","periodicidad"]);
+  col.equipo = buscar(["equipo","activo"]);
+  col.actividad = buscar(["actividad","descripcion","descripción"]);
+  col.tiempo = buscar(["tiempo"]);
+  col.usuario = buscar(["usuario responsable","responsable de equipo","usuario","asignado"]);
+  col.observaciones = buscar(["observ","obsev","nota"]);
+  col.responsable = buscar(["responsable"], col.usuario === null ? [] : [col.usuario]);
+  col.ultimo = buscar(["ultimo mantenimiento","último mantenimiento","fecha realizado",
+                       "ultimo mantto","último mantto","realizado el","fecha de realizacion"]);
+  return col;
+}
+
+/** Devuelve {equipos, resumen} a partir de las hojas leídas. */
+function analizarPrograma(hojas){
+  const equipos = [];
+  const resumen = {hojasLeidas:[], hojasOmitidas:[], hojasOcultas:[],
+                   herramientas:[], conUltimo:0};
+  const vistas = new Set();
+
+  for(const hoja of hojas){
+    const nombre = celdaTexto(hoja.nombre);
+    if(nombre.toLowerCase().trim() === "gantt"){
+      resumen.hojasOmitidas.push(nombre + " (hoja de apoyo)"); continue;
+    }
+    if(!hoja.filas.length){ resumen.hojasOmitidas.push(nombre + " (vacía)"); continue; }
+
+    let iEnc = null;
+    for(let i = 0; i < Math.min(8, hoja.filas.length); i++){
+      const bajo = hoja.filas[i].map(c => celdaTexto(c).toLowerCase()).join(" ");
+      if((bajo.includes("equipo") || bajo.includes("actividad")) && bajo.includes("frecuencia")){
+        iEnc = i; break;
+      }
+    }
+    if(iEnc === null){
+      resumen.hojasOmitidas.push(nombre + " (no se encontró el renglón de encabezados)");
+      continue;
+    }
+    const col = localizarColumnas(hoja.filas[iEnc]);
+    if(col.equipo === null && col.actividad === null){
+      resumen.hojasOmitidas.push(nombre + " (sin columna de Equipo ni Actividad)");
+      continue;
+    }
+
+    const deHoja = [];
+    let enHerramientas = false;
+    for(const fila of hoja.filas.slice(iEnc + 1)){
+      const primera = celdaTexto(fila[0]).toLowerCase();
+      if(FIN_DE_TABLA.some(p => primera.startsWith(p))){
+        enHerramientas = true;
+        if(!primera.startsWith("herramientas") && !primera.startsWith("represent")){
+          const h = celdaTexto(fila[0]);
+          const norm = t => t.toLowerCase().replace("alcohol alcohol", "alcohol");
+          if(h && !resumen.herramientas.some(x => norm(x) === norm(h)))
+            resumen.herramientas.push(h);
+        }
+        continue;
+      }
+      if(enHerramientas) continue;
+
+      const cel = clave => {
+        const i = col[clave];
+        return (i === null || i === undefined || i >= fila.length) ? null : fila[i];
+      };
+      const equipo = celdaTexto(cel("equipo"));
+      const actividad = celdaTexto(cel("actividad"));
+      if(!equipo && !actividad) continue;
+
+      const fProg = celdaFecha(cel("inicio"));
+      const fUlt = celdaFecha(cel("ultimo"));
+      deHoja.push({
+        ubicacion: celdaTexto(cel("ubicacion")) || nombre,
+        item: celdaTexto(cel("item")),
+        equipo: equipo || "PC",
+        usuario: celdaTexto(cel("usuario")),
+        actividad,
+        frecuencia: celdaTexto(cel("frecuencia")),
+        tiempo: celdaTexto(cel("tiempo")),
+        observaciones: celdaTexto(cel("observaciones")),
+        responsable: celdaTexto(cel("responsable")),
+        fecha_programada: fProg ? aISO(fProg) : "",
+        fecha_ultimo: fUlt ? aISO(fUlt) : "",
+        hoja_oculta: !!hoja.oculta
+      });
+    }
+
+    if(!deHoja.length){
+      resumen.hojasOmitidas.push(nombre + " (sin equipos capturados)"); continue;
+    }
+    const cuenta = {};
+    deHoja.forEach(x => { if(x.frecuencia) cuenta[x.frecuencia] = (cuenta[x.frecuencia]||0)+1; });
+    const dominante = Object.keys(cuenta).sort((a,b) => cuenta[b]-cuenta[a])[0] || "Semestral";
+
+    for(const x of deHoja){
+      const alertas = [];
+      if(!x.frecuencia){
+        alertas.push('Frecuencia vacía en el Excel; se hereda "' + dominante + '" de la ubicación');
+        x.frecuencia = dominante;
+      }
+      let meses = MESES_FREC[x.frecuencia.toLowerCase().trim()];
+      if(!meses){
+        alertas.push('Frecuencia "' + x.frecuencia + '" no reconocida; se trata como Semestral');
+        meses = 6;
+      }
+      x.meses = meses;
+      if(!x.fecha_programada && !x.fecha_ultimo)
+        alertas.push("Sin fecha programada en el Excel; requiere capturarla");
+      if(!x.actividad) alertas.push("Sin actividad descrita en el Excel");
+      if(x.hoja_oculta) alertas.push("La hoja de esta ubicación está oculta en el Excel; " +
+                                     "confirma si sigue vigente");
+      const k = `${x.ubicacion}|${x.item}|${x.equipo}|${x.usuario}`;
+      if(vistas.has(k)) alertas.push("Renglón duplicado en el Excel (misma ubicación, " +
+                                     "item, equipo y usuario)");
+      vistas.add(k);
+      x.alertas = alertas;
+      if(x.fecha_ultimo) resumen.conUltimo++;
+    }
+    resumen.hojasLeidas.push(nombre + " (" + deHoja.length + " equipos)");
+    if(hoja.oculta) resumen.hojasOcultas.push(nombre);
+    equipos.push(...deHoja);
+  }
+  equipos.forEach((x, i) => x.id = i + 1);
+  return {equipos, resumen};
+}
+
+/* ---------------------- comparación y aplicación ---------------------- */
+/** Compara el Excel contra el catálogo actual sin escribir nada. */
+function planImportacion(nuevos){
+  const actual = catalogoActual().equipos;
+  const porClave = new Map(actual.map(e => [clave(e), e]));
+  const plan = {nuevos:[], cambios:[], iguales:0, ausentes:[], historial:[]};
+  const vistos = new Set();
+
+  for(const e of nuevos){
+    const k = clave(e);
+    vistos.add(k);
+    const viejo = porClave.get(k);
+    const hist = estado.historial.filter(h => h.k === k);
+
+    if(!viejo){
+      plan.nuevos.push({k, datos:e});
+      if(e.fecha_ultimo && !hist.length) plan.historial.push({k, datos:e});
+      continue;
+    }
+
+    const difs = [];
+    const reactiva = !!viejo.inactivo;
+    if(reactiva) difs.push("Estaba marcado como inactivo y vuelve a aparecer en el Excel: " +
+                           "se reactiva");
+    for(const [campo, etiqueta] of [["frecuencia","Frecuencia"],["actividad","Actividad"],
+        ["tiempo","Tiempo estimado"],["responsable","Responsable"],
+        ["observaciones","Observaciones"],["fecha_programada","Fecha programada"]]){
+      const antes = String(viejo[campo] ?? "").trim();
+      const ahora = String(e[campo] ?? "").trim();
+      if(antes !== ahora) difs.push(`${etiqueta}: ${antes || "(vacío)"} → ${ahora || "(vacío)"}`);
+    }
+
+    let nuevaProx, notaProx = "";
+    const g = estado.equipos[k];
+    if(hist.length && g && g.ultimo){
+      if(Number(viejo.meses || 0) !== Number(e.meses)){
+        const base = aFecha(g.ultimo);
+        if(base){
+          nuevaProx = aISO(sumarMeses(base, e.meses));
+          notaProx = `Cambió la frecuencia: el siguiente se recalcula desde el último ` +
+                     `mantenimiento (${g.ultimo}) → ${nuevaProx}`;
+        }
+      }
+    } else {
+      const actualProx = g && g.proximo !== undefined ? g.proximo : (viejo.fecha_programada || "");
+      if((e.fecha_programada || "") !== (actualProx || "")){
+        nuevaProx = e.fecha_programada || "";
+        notaProx = "Sin mantenimientos registrados: el siguiente toma la fecha del Excel (" +
+                   (nuevaProx || "sin fecha") + ")";
+      }
+      if(e.fecha_ultimo && !hist.length) plan.historial.push({k, datos:e});
+    }
+
+    if(difs.length || nuevaProx !== undefined || reactiva)
+      plan.cambios.push({k, datos:e, difs, nuevaProx, notaProx, reactiva,
+                         tieneHist: hist.length > 0});
+    else plan.iguales++;
+  }
+
+  for(const e of actual){
+    const k = clave(e);
+    if(!vistos.has(k) && !e.inactivo)
+      plan.ausentes.push({k, datos:e, registros: estado.historial.filter(h => h.k === k).length});
+  }
+  return plan;
+}
+
+/** Aplica el plan: combina, nunca borra historial. */
+function aplicarImportacion(nuevos, plan, desactivarAusentes, importarHistorial){
+  const actual = catalogoActual();
+  const porClave = new Map(actual.equipos.map(e => [clave(e), e]));
+  const res = {nuevos:0, actualizados:0, desactivados:0, reactivados:0, historial:0};
+  const catalogo = [];
+
+  // orden del Excel para los que vienen en él
+  for(const e of nuevos){
+    const k = clave(e);
+    const viejo = porClave.get(k);
+    // e trae las alertas recalculadas del archivo, asi que Object.assign las refresca
+    const fila = Object.assign({}, viejo || {}, e);
+    delete fila.inactivo;
+    delete fila.hoja_oculta;
+    catalogo.push(fila);
+    if(!viejo) res.nuevos++;
+    else {
+      const ch = plan.cambios.find(c => c.k === k);
+      if(ch){
+        res.actualizados++;
+        if(ch.reactiva) res.reactivados++;
+        if(ch.nuevaProx !== undefined){
+          const g = estado.equipos[k] || {};
+          estado.equipos[k] = {ultimo: g.ultimo || "", proximo: ch.nuevaProx};
+        }
+      }
+    }
+  }
+  // los que ya no vienen: se conservan al final, marcados
+  for(const e of actual.equipos){
+    const k = clave(e);
+    if(catalogo.some(x => clave(x) === k)) continue;
+    if(desactivarAusentes){
+      catalogo.push(Object.assign({}, e, {inactivo: true}));
+      if(!e.inactivo) res.desactivados++;
+    } else {
+      catalogo.push(Object.assign({}, e));
+    }
+  }
+
+  if(importarHistorial){
+    for(const {k, datos} of plan.historial){
+      if(estado.historial.some(h => h.k === k)) continue;   // no pisa historial propio
+      const f = aFecha(datos.fecha_ultimo);
+      if(!f) continue;
+      const sig = sumarMeses(f, datos.meses);
+      estado.equipos[k] = {ultimo: aISO(f), proximo: aISO(sig)};
+      estado.historial.unshift({
+        k, ubicacion:datos.ubicacion, equipo:datos.equipo, usuario:datos.usuario,
+        frecuencia:datos.frecuencia, realizado:aISO(f), siguiente:aISO(sig),
+        tecnico:datos.responsable || "Importado del Excel",
+        notas:"Registro importado del archivo de Excel",
+        capturado:new Date().toISOString().slice(0,16).replace("T"," ")
+      });
+      res.historial++;
+    }
+  }
+
+  catalogo.forEach((x, i) => x.id = i + 1);
+  estado.catalogo = {
+    origen: (estado.catalogo && estado.catalogo.origen) || CATALOGO.origen,
+    generado: hoyISO(),
+    archivo: plan.archivo || "",
+    herramientas: (plan.herramientas && plan.herramientas.length)
+      ? plan.herramientas : catalogoActual().herramientas,
+    equipos: catalogo
+  };
+  estado.historial.sort((a,b) => (b.realizado || "").localeCompare(a.realizado || ""));
+  guardar();
+  return res;
+}
+
+/* ------------------------------ interfaz ------------------------------ */
+let impPlan = null, impEquipos = null;
+
+function abrirImportacion(archivo){
+  impPlan = impEquipos = null;
+  $("#imp-archivo").textContent = archivo.name;
+  $("#imp-body").innerHTML = '<p class="impload">Leyendo el archivo…</p>';
+  $("#imp-opts").innerHTML = "";
+  $("#imp-aplicar").disabled = true;
+  $("#imp-scrim").hidden = false;
+  $("#imp-scrim").classList.add("center");
+
+  leerXlsx(archivo).then(hojas => {
+    const {equipos, resumen} = analizarPrograma(hojas);
+    if(!equipos.length){
+      impError("El archivo no trae equipos",
+        `Se leyeron ${hojas.length} hoja(s) pero ninguna tiene renglones de equipo. ` +
+        `Detalle: ${resumen.hojasOmitidas.join("; ") || "sin detalle"}.`);
+      return;
+    }
+    impEquipos = equipos;
+    impPlan = planImportacion(equipos);
+    impPlan.archivo = archivo.name;
+    impPlan.herramientas = resumen.herramientas;
+    pintarImportacion(resumen, hojas.length);
+  }).catch(err => {
+    impError("No se pudo leer el archivo", err && err.message ? err.message : String(err));
+  });
+}
+function impError(titulo, texto){
+  $("#imp-body").innerHTML =
+    `<div class="imperr"><b>${esc(titulo)}</b><span>${esc(texto)}</span></div>`;
+  $("#imp-aplicar").disabled = true;
+}
+function cerrarImportacion(){
+  $("#imp-scrim").hidden = true;
+  impPlan = impEquipos = null;
+}
+
+function pintarImportacion(resumen, nHojas){
+  const p = impPlan;
+  const nN = p.nuevos.length, nC = p.cambios.length,
+        nA = p.ausentes.length, nH = p.historial.length;
+
+  const seccion = (clase, titulo, lineas, limite = 30) => {
+    if(!lineas.length) return "";
+    const extra = lineas.length > limite
+      ? `<li class="mas">…y ${lineas.length - limite} más</li>` : "";
+    return `<div class="impsec ${clase}"><h4>${esc(titulo)}</h4><ul>` +
+           lineas.slice(0, limite).join("") + extra + `</ul></div>`;
+  };
+  const etq = e => `${esc(e.ubicacion)} · ${esc(e.equipo)}` +
+                   (e.usuario ? ` (${esc(e.usuario)})` : "");
+
+  let html = `<div class="impstats">
+    <div class="impstat add"><span class="n">${nN}</span><span class="l">Equipos nuevos</span></div>
+    <div class="impstat upd"><span class="n">${nC}</span><span class="l">Se actualizan</span></div>
+    <div class="impstat same"><span class="n">${p.iguales}</span><span class="l">Sin cambios</span></div>
+    <div class="impstat gone"><span class="n">${nA}</span><span class="l">Ya no aparecen</span></div>
+  </div>
+  <p class="impnote">Se leyeron ${impEquipos.length} equipos en ${resumen.hojasLeidas.length}
+    de ${nHojas} hoja(s). Tu historial de mantenimientos no se toca: la importación solo
+    agrega y actualiza el catálogo.</p>`;
+
+  html += seccion("add", "Equipos nuevos que se agregan", p.nuevos.map(x =>
+    `<li>+ ${etq(x.datos)} — ${esc(x.datos.frecuencia)}, programado ${
+      esc(x.datos.fecha_programada || "sin fecha")}</li>`));
+
+  html += seccion("upd", "Equipos que se actualizan", p.cambios.map(ch =>
+    `<li>~ ${etq(ch.datos)} — ${esc(ch.difs.join("; ") || "solo la fecha del siguiente")}` +
+    (ch.notaProx ? `<em>${esc(ch.notaProx)}</em>` : "") + `</li>`));
+
+  html += seccion("gone", "Equipos que ya no aparecen en el Excel", p.ausentes.map(x =>
+    `<li>! ${etq(x.datos)} — se marca como inactivo${
+      x.registros ? ` (conserva ${x.registros} registro${x.registros>1?"s":""} de historial)` : ""}</li>`));
+
+  if(nH) html += seccion("add", "Historial que trae el Excel", p.historial.map(x =>
+    `<li>&gt; ${etq(x.datos)} — realizado ${esc(x.datos.fecha_ultimo)}</li>`));
+
+  const conAlerta = impEquipos.filter(e => e.alertas && e.alertas.length);
+  html += seccion("warn", "Puntos a revisar en el archivo", conAlerta.map(e =>
+    `<li>? ${etq(e)}<em>${esc(e.alertas.join("; "))}</em></li>`));
+
+  if(resumen.hojasOmitidas.length)
+    html += seccion("mute", "Hojas que no se importaron",
+      resumen.hojasOmitidas.map(t => `<li>— ${esc(t)}</li>`));
+
+  if(!nN && !nC && !nA && !nH)
+    html += `<div class="impok">El archivo coincide con lo que ya tienes cargado.
+      No hay nada que cambiar.</div>`;
+
+  $("#imp-body").innerHTML = html;
+
+  let opts = "";
+  if(nA) opts += `<label><input type="checkbox" id="imp-desact" checked>
+    Marcar como inactivo${nA>1?"s":""} ${nA===1?"el equipo":"los "+nA+" equipos"} que ya no
+    aparece${nA>1?"n":""}</label>`;
+  if(nH) opts += `<label><input type="checkbox" id="imp-hist" checked>
+    Importar ${nH===1?"el registro":"los "+nH+" registros"} de mantenimiento ya realizado</label>`;
+  $("#imp-opts").innerHTML = opts;
+  $("#imp-aplicar").disabled = !(nN || nC || nA || nH);
+}
+
+/* ------------------------------------------------------------ eventos ---- */
+function tema(){
+  const r = document.documentElement;
+  const oscuroAhora = r.getAttribute("data-theme") === "dark" ||
+    (!r.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  r.setAttribute("data-theme", oscuroAhora ? "light" : "dark");
+  try{ localStorage.setItem(LLAVE + ".tema", r.getAttribute("data-theme")); }catch(e){}
+}
+
+function iniciar(){
+  try{
+    const t = localStorage.getItem(LLAVE + ".tema");
+    if(t) document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+
+  cargar();
+  llenarFiltros();
+  render();
+
+  $("#q").addEventListener("input", e => { F.q = e.target.value; render(); });
+  $("#f-ubi").addEventListener("change", e => { F.ubi = e.target.value; render(); });
+  $("#f-fre").addEventListener("change", e => { F.fre = e.target.value; render(); });
+  $("#f-est").addEventListener("change", e => { F.est = e.target.value; render(); });
+  $("#b-limpiar").addEventListener("click", () => {
+    F.q = F.ubi = F.fre = F.est = "";
+    $("#q").value = ""; $("#f-ubi").value = ""; $("#f-fre").value = ""; $("#f-est").value = "";
+    render();
+  });
+
+  $("#banda").addEventListener("click", ev => {
+    const b = ev.target.closest(".stat");
+    if(!b) return;
+    F.est = (F.est === b.dataset.est) ? "" : b.dataset.est;
+    $("#f-est").value = F.est;
+    render();
+  });
+
+  document.addEventListener("click", ev => {
+    if(ev.target.closest("[data-cerrar-aviso]")){
+      estado.avisoOculto = true; guardar(); $("#aviso").hidden = true; return;
+    }
+    const ver = ev.target.closest("[data-ver]");
+    if(ver){ abrirDrawer(ver.dataset.ver, true); return; }
+    const del = ev.target.closest("[data-del]");
+    if(del){
+      const h = estado.historial[+del.dataset.del];
+      if(h && confirm(`Se eliminará el registro del ${h.realizado} para ${h.ubicacion} · ${h.equipo}\n` +
+                      `y la fecha del siguiente mantenimiento volverá al valor anterior.\n\n¿Continuar?`))
+        deshacer(+del.dataset.del);
+    }
+  });
+
+  $("#tbody").addEventListener("change", ev => {
+    const chk = ev.target.closest(".chk");
+    if(!chk) return;
+    const k = chk.closest("tr").dataset.k;
+    if(chk.checked) abrirDrawer(k, false);
+    else render();   // desmarcar no borra: el historial se corrige desde la pestaña Historial
+  });
+
+  $("#dr-fecha").addEventListener("input", recalcular);
+  $("#dr-hoy").addEventListener("click", () => { $("#dr-fecha").value = hoyISO(); recalcular(); });
+  $("#dr-cancel").addEventListener("click", cerrarDrawer);
+  $("#scrim").addEventListener("click", ev => { if(ev.target === $("#scrim")) cerrarDrawer(); });
+  document.addEventListener("keydown", ev => {
+    if(ev.key !== "Escape") return;
+    if(!$("#imp-scrim").hidden) cerrarImportacion();
+    else if(!$("#scrim").hidden) cerrarDrawer();
+  });
+
+  $("#dr-guardar").addEventListener("click", () => {
+    const f = aFecha($("#dr-fecha").value);
+    if(!f){ aviso("Falta la fecha", "Captura la fecha en que se realizó el mantenimiento.", "warn", 7000); return; }
+    const e = filas().find(x => x._k === drK);
+    const sig = registrar(drK, $("#dr-fecha").value, $("#dr-tec").value.trim(), $("#dr-notas").value.trim());
+    cerrarDrawer();
+    const cuerpo = `${e.ubicacion} · ${e.equipo}${e.usuario ? " (" + e.usuario + ")" : ""}\n` +
+                   `Realizado: ${aISO(f)}\nSiguiente: ${aISO(sig)} (${e.frecuencia}) · ${venceTexto(sig)}`;
+    aviso("Siguiente mantenimiento programado", cuerpo, "ok", 11000);
+    notificacionSistema("Siguiente mantenimiento programado", cuerpo.replace(/\n/g, " · "));
+  });
+
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+    ["programa","historial","resumen"].forEach(v =>
+      $("#v-" + v).hidden = (v !== t.dataset.vista));
+  }));
+
+  $("#b-imp").addEventListener("click", () => {
+    if(!soportaDescompresion()){
+      aviso("Este navegador no puede leer .xlsx",
+            "La lectura del Excel necesita Chrome o Edge actualizados. También puedes usar " +
+            "la versión de escritorio (Python), que no depende del navegador.", "warn", 14000);
+      return;
+    }
+    $("#f-imp").click();
+  });
+  $("#f-imp").addEventListener("change", ev => {
+    if(ev.target.files[0]) abrirImportacion(ev.target.files[0]);
+    ev.target.value = "";
+  });
+  $("#imp-cancel").addEventListener("click", cerrarImportacion);
+  $("#imp-scrim").addEventListener("click", ev => {
+    if(ev.target === $("#imp-scrim")) cerrarImportacion();
+  });
+  $("#imp-aplicar").addEventListener("click", () => {
+    if(!impPlan || !impEquipos) return;
+    const desact = $("#imp-desact") ? $("#imp-desact").checked : true;
+    const hist = $("#imp-hist") ? $("#imp-hist").checked : true;
+    const r = aplicarImportacion(impEquipos, impPlan, desact, hist);
+    const archivo = impPlan.archivo;
+    cerrarImportacion();
+    llenarFiltros();
+    F.ubi = F.fre = ""; $("#f-ubi").value = ""; $("#f-fre").value = "";
+    render();
+    const partes = [];
+    if(r.nuevos) partes.push(`${r.nuevos} equipos nuevos`);
+    if(r.actualizados) partes.push(`${r.actualizados} actualizados`);
+    if(r.desactivados) partes.push(`${r.desactivados} marcados inactivos`);
+    if(r.reactivados) partes.push(`${r.reactivados} reactivados`);
+    if(r.historial) partes.push(`${r.historial} registros de historial`);
+    aviso("Importación aplicada",
+          (partes.join(", ") || "Sin cambios") + ".\n" + archivo, "ok", 12000);
+  });
+
+  $("#b-tema").addEventListener("click", tema);
+  $("#b-csv").addEventListener("click", exportarCSV);
+  $("#b-csvhist").addEventListener("click", exportarHistorialCSV);
+  $("#b-resp").addEventListener("click", respaldar);
+  $("#b-rest").addEventListener("click", () => $("#f-rest").click());
+  $("#f-rest").addEventListener("change", ev => {
+    if(ev.target.files[0]) restaurar(ev.target.files[0]);
+    ev.target.value = "";
+  });
+
+  const bn = $("#b-notif");
+  function estadoNotif(){
+    if(typeof Notification === "undefined"){ bn.hidden = true; return; }
+    if(Notification.permission === "granted"){ bn.textContent = "Notificaciones activas"; bn.disabled = true; }
+    else if(Notification.permission === "denied"){ bn.textContent = "Notificaciones bloqueadas"; bn.disabled = true; }
+    else bn.textContent = "Permitir notificaciones";
+  }
+  bn.addEventListener("click", () => {
+    try{ Notification.requestPermission().then(estadoNotif); }catch(e){ estadoNotif(); }
+  });
+  estadoNotif();
+
+  // Revisión periódica mientras la bitácora esté abierta
+  setInterval(() => {
+    const criticos = filas().filter(e => e._est === "vencido" || e._est === "hoy");
+    if(criticos.length){
+      const c = `${criticos.length} mantenimiento(s) vencido(s) o que vencen hoy.`;
+      aviso("Mantenimientos pendientes", c, "warn", 12000);
+      notificacionSistema("Mantenimiento preventivo TI", c);
+    }
+    render();
+  }, 4 * 60 * 60 * 1000);
+}
+
+iniciar();
+</script>
+</body>
+</html>
